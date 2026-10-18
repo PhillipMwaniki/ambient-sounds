@@ -49,6 +49,7 @@ gdbus call --session --dest org.Cinnamon --object-path /org/Cinnamon \
 
 Modules are loaded with `require()`, which picks up changes on reload.
 
-## Credits
+## Licence
 
-See [ATTRIBUTION.md](ATTRIBUTION.md).
+Code is [MIT](LICENSE). The bundled sounds are under the Pixabay Content
+License; see [ATTRIBUTION.md](ATTRIBUTION.md) for sources.
