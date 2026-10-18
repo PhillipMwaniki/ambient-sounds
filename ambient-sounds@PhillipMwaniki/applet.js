@@ -20,6 +20,18 @@ const FADE_OUT_MS = 1000;
 const SCROLL_STEP = 0.05;
 const SAVE_DELAY_MS = 500;
 
+const SLEEP_OPTIONS = [15, 30, 45, 60, 90, 120];   // minutes
+const SLEEP_FADE_MS = 60 * 1000;                   // fade over the final minute
+const SLEEP_TICK_S = 5;
+
+function formatMinutes(minutes) {
+    const hours = Math.floor(minutes / 60);
+    const rest = minutes % 60;
+    if (!hours)
+        return `${rest} min`;
+    return rest ? `${hours} h ${rest} min` : `${hours} h`;
+}
+
 // One menu row per sound: icon, name, level slider and on/off switch.
 class SoundItem extends PopupMenu.PopupBaseMenuItem {
     _init(sound, enabled, level) {
@@ -85,6 +97,9 @@ class AmbientSoundsApplet extends Applet.IconApplet {
 
         this._playing = false;
         this._saveId = 0;
+        this._sleepMinutes = 0;
+        this._sleepEnd = 0;
+        this._sleepId = 0;
         this._master = this.settings.getValue('master-volume');
         this._mix = this._loadMix();
         this._tracks = {};
@@ -154,6 +169,12 @@ class AmbientSoundsApplet extends Applet.IconApplet {
         for (const preset of PRESETS)
             presets.menu.addAction(preset.title, () => this._applyPreset(preset));
         this.menu.addMenuItem(presets);
+
+        this._sleepMenu = new PopupMenu.PopupSubMenuMenuItem(_('Sleep timer'));
+        this._sleepItems = [[0, this._sleepMenu.menu.addAction(_('Off'), () => this._setSleepTimer(0))]];
+        for (const minutes of SLEEP_OPTIONS)
+            this._sleepItems.push([minutes, this._sleepMenu.menu.addAction(formatMinutes(minutes), () => this._setSleepTimer(minutes))]);
+        this.menu.addMenuItem(this._sleepMenu);
     }
 
     on_applet_clicked() {
@@ -165,6 +186,7 @@ class AmbientSoundsApplet extends Applet.IconApplet {
     }
 
     on_applet_removed_from_panel() {
+        this._cancelSleepTimer();
         if (this._saveId) {
             GLib.source_remove(this._saveId);
             this._saveId = 0;
@@ -252,9 +274,57 @@ class AmbientSoundsApplet extends Applet.IconApplet {
         return Math.pow(this._mix[id].level * this._master, 3) * sound.gain;
     }
 
-    _sync() {
+    // Picking a duration starts the mix if it is paused; pausing by hand
+    // cancels the timer (see _sync).
+    _setSleepTimer(minutes) {
+        this._cancelSleepTimer();
+        if (minutes > 0) {
+            this._sleepMinutes = minutes;
+            // Wall-clock time so that waking from suspend past the deadline
+            // stops the mix instead of carrying on for the time spent asleep.
+            this._sleepEnd = GLib.get_real_time() + minutes * 60 * 1000000;
+            this._sleepId = GLib.timeout_add_seconds(GLib.PRIORITY_DEFAULT, SLEEP_TICK_S, () => this._onSleepTick());
+            if (!this._playing) {
+                this._setPlaying(true);
+                return;
+            }
+        }
+        this._updateStatus();
+    }
+
+    _cancelSleepTimer() {
+        if (this._sleepId) {
+            GLib.source_remove(this._sleepId);
+            this._sleepId = 0;
+        }
+        this._sleepMinutes = 0;
+        this._sleepEnd = 0;
+    }
+
+    _sleepRemainingMs() {
+        return this._sleepEnd ? Math.max(0, (this._sleepEnd - GLib.get_real_time()) / 1000) : 0;
+    }
+
+    // The fade starts a minute before the deadline so the mix is silent by
+    // the time chosen. Playing again during the fade brings it back.
+    _onSleepTick() {
+        const remaining = this._sleepRemainingMs();
+        if (remaining > SLEEP_FADE_MS) {
+            this._updateStatus();
+            return GLib.SOURCE_CONTINUE;
+        }
+        this._sleepId = 0;
+        this._playing = false;
+        this.settings.setValue('was-playing', false);
+        this._sync(Math.max(remaining, FADE_OUT_MS));
+        return GLib.SOURCE_REMOVE;
+    }
+
+    _sync(fadeOutMs) {
         const fadeIn = this.fadeEnabled ? FADE_IN_MS : 0;
-        const fadeOut = this.fadeEnabled ? FADE_OUT_MS : 0;
+        const fadeOut = fadeOutMs !== undefined ? fadeOutMs : (this.fadeEnabled ? FADE_OUT_MS : 0);
+        if (!this._playing)
+            this._cancelSleepTimer();
         for (const sound of SOUNDS) {
             const track = this._tracks[sound.id];
             track.setVolume(this._volumeFor(sound.id));
@@ -282,10 +352,20 @@ class AmbientSoundsApplet extends Applet.IconApplet {
 
         this._applet_icon.opacity = this._playing ? 255 : 140;
 
+        const sleepMinutes = Math.ceil(this._sleepRemainingMs() / 60000);
+        this._sleepMenu.label.text = this._sleepEnd
+            ? `${_('Sleep timer')}: ${formatMinutes(sleepMinutes)} ${_('left')}`
+            : _('Sleep timer');
+        for (const [minutes, item] of this._sleepItems)
+            item.setShowDot(minutes === this._sleepMinutes);
+
         const volume = Math.round(this._master * 100);
         if (this._playing) {
             const names = this._enabledSounds().map(sound => sound.title).join(', ');
-            this.set_applet_tooltip(`${_('Ambient Sounds')}: ${names}  (${volume}%)`);
+            let tooltip = `${_('Ambient Sounds')}: ${names}  (${volume}%)`;
+            if (this._sleepEnd)
+                tooltip += `\n${_('Stops in')} ${formatMinutes(sleepMinutes)}`;
+            this.set_applet_tooltip(tooltip);
         } else {
             this.set_applet_tooltip(_('Ambient Sounds (paused)'));
         }
@@ -298,7 +378,7 @@ class AmbientSoundsApplet extends Applet.IconApplet {
         this._items[track.sound.id].setEnabled(false);
         if (this._enabledSounds().length === 0)
             this._playing = false;
-        this._updateStatus();
+        this._sync();
         this._scheduleSave();
     }
 

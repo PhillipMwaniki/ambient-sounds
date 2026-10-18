@@ -9,6 +9,8 @@ birds, crickets, fireplace and café.
 - A master volume slider; scroll on the panel icon to change it.
 - Presets: Rainy café, Thunderstorm, Campfire night, Cosy cabin, Morning forest.
 - Sounds fade in and out (can be turned off in settings).
+- Sleep timer (15 min to 2 h) that fades the mix out over its final minute.
+  Pressing play during the fade brings it back; pausing cancels the timer.
 - Your mix and volume are saved, and can resume automatically at login.
 - Middle-click the panel icon to play or pause.
 
