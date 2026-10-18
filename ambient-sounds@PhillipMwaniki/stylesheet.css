@@ -1,0 +1,11 @@
+.ambient-sound-row {
+    spacing: 0.6em;
+}
+
+.ambient-sound-label {
+    min-width: 5.5em;
+}
+
+.ambient-sound-slider {
+    min-width: 10em;
+}
