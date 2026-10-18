@@ -1,0 +1,9 @@
+{
+    "uuid": "ambient-sounds@PhillipMwaniki",
+    "name": "Ambient Sounds",
+    "description": "Mix looping ambient sounds (rain, fireplace, café and more) from the panel.",
+    "version": "0.1.0",
+    "icon": "audio-headphones",
+    "max-instances": 1,
+    "author": "PhillipMwaniki"
+}
