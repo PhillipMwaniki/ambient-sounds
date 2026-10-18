@@ -117,9 +117,12 @@ var Track = class Track {
         }
     }
 
+    // Cubic, like the sliders: a linear fade sounds flat for most of its
+    // length and then drops away at the end, which a minute-long fade makes
+    // obvious.
     _apply() {
         if (this._pipeline)
-            this._pipeline.volume = this._volume * this._fade;
+            this._pipeline.volume = this._volume * Math.pow(this._fade, 3);
     }
 
     _fadeTo(target, durationMs, onDone) {
