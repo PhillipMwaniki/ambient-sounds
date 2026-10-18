@@ -8,10 +8,12 @@ const GLib = imports.gi.GLib;
 const Gst = imports.gi.Gst;
 const St = imports.gi.St;
 
+// require() re-reads these on applet reload; imports.ui.appletManager's
+// importer would keep serving the first version until Cinnamon restarts.
+const { Track } = require('./player');
+const { SOUNDS, PRESETS, DEFAULT_LEVEL } = require('./library');
+
 const UUID = 'ambient-sounds@PhillipMwaniki';
-const AppletDir = imports.ui.appletManager.applets[UUID];
-const { Track } = AppletDir.player;
-const { SOUNDS, PRESETS, DEFAULT_LEVEL } = AppletDir.library;
 
 const FADE_IN_MS = 1500;
 const FADE_OUT_MS = 1000;

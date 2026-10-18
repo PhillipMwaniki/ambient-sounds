@@ -57,13 +57,15 @@ var Track = class Track {
         pipeline.uri = this._uri;
         pipeline.flags = PLAY_FLAG_AUDIO | PLAY_FLAG_SOFT_VOLUME;
 
-        // Name the stream so it shows up as "Ambient Sounds — Rain" in the
-        // sound settings rather than as an anonymous GStreamer client.
+        // Name the stream so it shows up as "Ambient Sounds" in the sound
+        // settings. pulsesink defaults to media.role=music, and WirePlumber
+        // restores one volume for every stream with that role, so a quiet
+        // music player would make us quiet too. Our own role gets our own.
         const sink = Gst.ElementFactory.make('pulsesink', null);
         if (sink) {
             sink.client_name = 'Ambient Sounds';
             sink.stream_properties = Gst.Structure.new_from_string(
-                `props, media.role=music, media.name="${this.sound.title}", application.icon_name=audio-headphones`);
+                'props, media.role=ambient, application.icon_name=audio-headphones');
             pipeline.audio_sink = sink;
         }
 
