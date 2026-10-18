@@ -11,7 +11,7 @@ const St = imports.gi.St;
 const UUID = 'ambient-sounds@PhillipMwaniki';
 const AppletDir = imports.ui.appletManager.applets[UUID];
 const { Track } = AppletDir.player;
-const { SOUNDS, PRESETS, DEFAULT_LEVEL } = AppletDir.sounds;
+const { SOUNDS, PRESETS, DEFAULT_LEVEL } = AppletDir.library;
 
 const FADE_IN_MS = 1500;
 const FADE_OUT_MS = 1000;
