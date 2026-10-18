@@ -1,0 +1,29 @@
+{
+    "section-playback": {
+        "type": "section",
+        "description": "Playback"
+    },
+    "fade": {
+        "type": "switch",
+        "default": true,
+        "description": "Fade sounds in and out"
+    },
+    "resume-on-start": {
+        "type": "switch",
+        "default": false,
+        "description": "Resume the mix when Cinnamon starts",
+        "tooltip": "If the mix was playing when you logged out, start it again at login."
+    },
+    "mix": {
+        "type": "generic",
+        "default": {}
+    },
+    "master-volume": {
+        "type": "generic",
+        "default": 0.8
+    },
+    "was-playing": {
+        "type": "generic",
+        "default": false
+    }
+}
