@@ -3,6 +3,11 @@
 A Cinnamon panel applet for mixing looping ambient sounds: rain, thunder,
 birds, crickets, fireplace and café.
 
+<p>
+  <img src="docs/mixer.png" alt="Ambient Sounds mixer menu with per-sound sliders and switches" width="420">
+  <img src="docs/sleep-timer.png" alt="Sleep timer submenu with 30 minutes selected" width="420">
+</p>
+
 ## Features
 
 - Switch each sound on or off and set its level from the panel menu.
