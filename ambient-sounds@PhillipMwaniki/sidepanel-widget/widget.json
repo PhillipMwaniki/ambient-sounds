@@ -1,0 +1,7 @@
+{
+    "id": "ambient-sounds",
+    "name": "Ambient Sounds",
+    "description": "Mix ambient sounds, pick a preset or set a sleep timer.",
+    "api": 1,
+    "order": 25
+}

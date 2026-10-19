@@ -9,3 +9,89 @@
 .ambient-sound-slider {
     min-width: 10em;
 }
+
+/* Side Panel widget (sidepanel-widget/). Neutral tints so it sits on any
+   theme's panel background. */
+.ambient-widget-body {
+    spacing: 0.7em;
+}
+
+.ambient-widget-top {
+    spacing: 0.8em;
+}
+
+.ambient-widget-play {
+    padding: 0.55em;
+    border-radius: 999px;
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.ambient-widget-play:hover,
+.ambient-widget-play:focus {
+    background-color: rgba(255, 255, 255, 0.18);
+}
+
+.ambient-widget-tile {
+    padding: 0.6em 0.2em;
+    border-radius: 12px;
+    background-color: rgba(255, 255, 255, 0.04);
+}
+
+.ambient-widget-tile:hover,
+.ambient-widget-tile:focus {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.ambient-widget-tile:checked {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+.ambient-widget-tile-label {
+    font-size: 0.85em;
+    padding-top: 0.3em;
+}
+
+.ambient-widget-levels {
+    spacing: 0.3em;
+}
+
+.ambient-widget-level {
+    spacing: 0.6em;
+}
+
+.ambient-widget-level-label {
+    font-size: 0.85em;
+    min-width: 5.5em;
+}
+
+.ambient-widget-heading {
+    font-size: 0.85em;
+    font-weight: bold;
+    opacity: 0.7;
+    padding-top: 0.2em;
+}
+
+.ambient-widget-chip {
+    padding: 0.3em 0.8em;
+    border-radius: 999px;
+    font-size: 0.9em;
+    background-color: rgba(255, 255, 255, 0.06);
+}
+
+.ambient-widget-chip:hover,
+.ambient-widget-chip:focus {
+    background-color: rgba(255, 255, 255, 0.12);
+}
+
+.ambient-widget-chip:checked {
+    background-color: rgba(255, 255, 255, 0.22);
+    font-weight: bold;
+}
+
+.ambient-widget-chip-rows {
+    spacing: 6px;
+}
+
+.ambient-widget-chip-row {
+    spacing: 6px;
+}

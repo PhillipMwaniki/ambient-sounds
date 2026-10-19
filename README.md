@@ -23,6 +23,14 @@ Playback uses GStreamer inside Cinnamon itself, so there is nothing extra to
 install and no helper processes. Each sound loops seamlessly using segment
 seeks, and per-sound gains even out the loudness of the recordings.
 
+## Side Panel widget
+
+If [Side Panel](https://github.com/PhillipMwaniki/cinnamon-sidepanel) is
+installed, Ambient Sounds also shows up there as a widget, with tiles for each
+sound, level sliders, presets and the sleep timer. The widget controls this
+applet's playback rather than playing anything itself, so the panel menu and
+the widget always show the same mix. The applet still needs to be on a panel.
+
 ## Install
 
 ```sh
