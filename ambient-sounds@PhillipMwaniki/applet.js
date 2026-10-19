@@ -3,6 +3,7 @@ const PopupMenu = imports.ui.popupMenu;
 const Slider = imports.ui.slider;
 const Settings = imports.ui.settings;
 const Main = imports.ui.main;
+const Signals = imports.signals;
 const Clutter = imports.gi.Clutter;
 const GLib = imports.gi.GLib;
 const Gst = imports.gi.Gst;
@@ -112,11 +113,40 @@ class AmbientSoundsApplet extends Applet.IconApplet {
         this._buildMenu();
 
         this.actor.connect('scroll-event', (actor, event) => this._onScroll(event));
+        this.remote = this._createRemote();
 
         if (this.resumeOnStart && this.settings.getValue('was-playing'))
             this._setPlaying(true);
         else
             this._updateStatus();
+    }
+
+    // The Side Panel's Ambient Sounds widget (sidepanel-widget/) drives the
+    // applet through this, so there is only ever one set of players.
+    _createRemote() {
+        const remote = {
+            sounds: SOUNDS,
+            presets: PRESETS,
+            sleepOptions: SLEEP_OPTIONS,
+            getState: () => ({
+                playing: this._playing,
+                master: this._master,
+                mix: JSON.parse(JSON.stringify(this._mix)),
+                sleepMinutes: this._sleepMinutes,
+                sleepRemainingMs: this._sleepRemainingMs(),
+            }),
+            setPlaying: playing => this._setPlaying(playing),
+            setEnabled: (id, enabled) => this._setEnabled(id, enabled),
+            setLevel: (id, level) => {
+                this._items[id].slider.setValue(level);
+                this._setLevel(id, level);
+            },
+            setMaster: value => this._setMaster(value),
+            applyPreset: index => this._applyPreset(PRESETS[index]),
+            setSleepTimer: minutes => this._setSleepTimer(minutes),
+        };
+        Signals.addSignalMethods(remote);
+        return remote;
     }
 
     // Saved state merged over defaults, so sounds added later still appear.
@@ -186,6 +216,8 @@ class AmbientSoundsApplet extends Applet.IconApplet {
     }
 
     on_applet_removed_from_panel() {
+        this.remote.emit('destroyed');
+        this.remote.disconnectAll();
         this._cancelSleepTimer();
         if (this._saveId) {
             GLib.source_remove(this._saveId);
@@ -205,7 +237,6 @@ class AmbientSoundsApplet extends Applet.IconApplet {
             this._setMaster(this._master - SCROLL_STEP);
         else
             return Clutter.EVENT_PROPAGATE;
-        this._masterSlider.setValue(this._master);
         return Clutter.EVENT_STOP;
     }
 
@@ -216,10 +247,8 @@ class AmbientSoundsApplet extends Applet.IconApplet {
     _setPlaying(playing) {
         // Starting with nothing switched on would look broken; turn on the
         // first sound so the button always makes a noise.
-        if (playing && this._enabledSounds().length === 0) {
+        if (playing && this._enabledSounds().length === 0)
             this._mix[SOUNDS[0].id].enabled = true;
-            this._items[SOUNDS[0].id].setEnabled(true);
-        }
         this._playing = playing;
         this._sync();
         this.settings.setValue('was-playing', playing);
@@ -241,6 +270,7 @@ class AmbientSoundsApplet extends Applet.IconApplet {
     _setLevel(id, level) {
         this._mix[id].level = level;
         this._tracks[id].setVolume(this._volumeFor(id));
+        this.remote.emit('changed');
         this._scheduleSave();
     }
 
@@ -259,7 +289,6 @@ class AmbientSoundsApplet extends Applet.IconApplet {
             state.enabled = level !== undefined;
             if (state.enabled)
                 state.level = level;
-            this._items[sound.id].setEnabled(state.enabled);
             this._items[sound.id].slider.setValue(state.level);
         }
         this._playing = true;
@@ -336,7 +365,12 @@ class AmbientSoundsApplet extends Applet.IconApplet {
         this._updateStatus();
     }
 
+    // Every change, whether from the menu, the panel icon or the side panel
+    // widget, ends here so all views stay in step.
     _updateStatus() {
+        for (const sound of SOUNDS)
+            this._items[sound.id].setEnabled(this._mix[sound.id].enabled);
+        this._masterSlider.setValue(this._master);
         this._playItem.setToggleState(this._playing);
         this._playItem.setIconSymbolicName(this._playing ? 'media-playback-pause-symbolic' : 'media-playback-start-symbolic');
         this._playItem.label.text = this._playing ? _('Playing') : _('Play mix');
@@ -369,13 +403,13 @@ class AmbientSoundsApplet extends Applet.IconApplet {
         } else {
             this.set_applet_tooltip(_('Ambient Sounds (paused)'));
         }
+        this.remote.emit('changed');
     }
 
     _onTrackError(track, message) {
         global.logError(`${UUID}: ${track.sound.title}: ${message}`);
         Main.notifyError(_('Ambient Sounds'), `${_('Could not play')} ${track.sound.title}: ${message}`);
         this._mix[track.sound.id].enabled = false;
-        this._items[track.sound.id].setEnabled(false);
         if (this._enabledSounds().length === 0)
             this._playing = false;
         this._sync();
